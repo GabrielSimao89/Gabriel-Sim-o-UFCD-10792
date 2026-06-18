@@ -1,0 +1,209 @@
+
+POST http://localhost:2525/imposters
+Content-Type: application/json
+
+{
+  "name":"Ex5GestaoFuncionarios",
+  "port":5555,
+  "protocol":"http",
+  "stubs":[
+    {
+      "responses":[{
+        "is":{
+          "statusCode":400,
+          "headers":{"Content-Type":"application/json"},
+          "body":{"erro":"dados obrigatorios em falta, requer nome, cargo e salario."}
+        }
+      }],
+      "predicates": [
+        {"equals":{"path":"/api/funcionarios","method":"POST"}},
+        {"or":[
+          {"exists":{"body":{"nome": false}}},
+          {"exists":{"body":{"cargo": false}}},
+          {"exists":{"body":{"salario": false}}}
+        ]}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":400,
+          "headers":{"Content-Type":"application/json"},
+          "body":{"erro":"salario n pode ser inferior a 760€."}
+        }
+      }],
+      "predicates":[
+        {"equals":{"path":"/api/funcionarios","method":"POST"}},
+        {"deepEquals":{"body":{"salario":500}}}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":201,
+          "headers":{"Content-Type":"application/json"},
+          "body":{
+            "mensagem":"Func registado",
+            "id":105,
+            "nome":"ana",
+            "cargo":"programadora",
+            "salario": 1200
+          }
+        }
+      }],
+      "predicates":[
+        {"equals":{"path":"/api/funcionarios","method":"POST"}}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":400,
+          "headers":{"Content-Type":"application/json"},
+          "body":{"erro":"n e permitido alterar o salario para um valor abaixo de 760€."}
+        }
+      }],
+      "predicates":[
+        {"equals":{"path":"/api/funcionarios/1/salario","method":"PUT"}},
+        {"deepEquals":{"body":{"salario":600}}}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":200,
+          "headers":{"Content-Type":"application/json"},
+          "body":{
+            "mensagem":"salario atualizado",
+            "id":1,
+            "novo_salario":1500
+          }
+        }
+      }],
+      "predicates":[
+        {"equals":{"path": "/api/funcionarios/1/salario","method":"PUT"}}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":409,
+          "headers":{"Content-Type": "application/json"},
+          "body":{"erro":"n e possivel remover o func, existem tarefas pendentes associadas."}
+        }
+      }],
+      "predicates":[
+        {"equals":{"path":"/api/funcionarios/2","method":"DELETE"}}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":200,
+          "headers":{"Content-Type":"application/json"},
+          "body":{"mensagem":"Func removido"}
+        }
+      }],
+      "predicates":[
+        {"equals":{"path":"/api/funcionarios/1","method":"DELETE"}}
+      ]
+    },
+    {
+      "responses":[{
+        "is":{
+          "statusCode":200,
+          "headers":{"Content-Type":"application/json"},
+          "body":[
+            {"id":1,"nome":"carlos","cargo":"gestor","salario":1400},
+            {"id":2,"nome":"rita","cargo":"designer","salario":950},
+            {"id":3,"nome":"pedro","cargo":"suporte tecnico","salario":800}
+          ]
+        }
+      }],
+      "predicates":[
+        {"equals":{"path":"/api/funcionarios","method":"GET"}}
+      ]
+    }
+  ]
+}
+
+###
+
+#get listar todos os func
+GET http://localhost:5555/api/funcionarios
+
+Content-Type: application/json
+
+###
+
+#post erro 400 dados em falta - falta o campo cargo
+POST http://localhost:5555/api/funcionarios
+
+Content-Type: application/json
+
+{
+  "nome":"ana",
+  "salario":1200
+}
+
+###
+
+#post erro 400 salario inferior 760
+POST http://localhost:5555/api/funcionarios
+
+Content-Type: application/json
+
+{
+  "nome":"gabriel",
+  "cargo":"atleta",
+  "salario":800
+}
+
+###
+
+#post sucesso registar func valido
+POST http://localhost:5555/api/funcionarios
+
+Content-Type: application/json
+
+{
+  "nome":"Hugo",
+  "cargo":"desenvolvedor",
+  "salario":1100
+}
+
+###
+
+#put erro 400 tentar reduzir o salario abaixo de 760 id:1
+PUT http://localhost:5555/api/funcionarios/1/salario
+
+Content-Type: application/json
+
+{
+  "salario":600
+}
+
+###
+
+#put sucesso alterar salario do funcionario id:1) -> Erro/Sucesso 200
+PUT http://localhost:5555/api/funcionarios/1/salario
+
+Content-Type: application/json
+
+{
+  "salario":1500
+}
+
+###
+
+#delete erro 409 func tem tarefas pendentes id:2
+DELETE http://localhost:5555/api/funcionarios/2
+
+Content-Type: application/json
+
+###
+
+#delete sucesso remover func sem tarefas id:1
+DELETE http://localhost:5555/api/funcionarios/1
+
+Content-Type: application/json
